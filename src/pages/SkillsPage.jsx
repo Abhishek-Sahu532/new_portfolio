@@ -49,8 +49,8 @@ const SkillsPage = ({ theme, isDarkMode, setIsHovering, navItems, setCurrentSect
           >
             <motion.div
               className="text-center mb-6"
-              whileHover={{ rotate: 360, scale: 1.2 }}
-              transition={{ duration: 0.8 }}
+              whileHover={{ scale: 1.2 }} // Removed rotation, only scale
+              transition={{ duration: 0.3 }}
             >
               <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-r ${category.color} mb-4`}>
                 <category.icon className="w-8 h-8 text-white" />

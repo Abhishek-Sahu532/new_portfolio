@@ -13,8 +13,8 @@ const HomePage = ({ theme, isDarkMode, setCurrentPage, setIsHovering, navItems, 
   >
     <div className="relative z-20 text-center max-w-6xl mx-auto px-6">
       <motion.div
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 1.5, delay: 0.2 }}
         className="mb-12 relative"
       >
@@ -24,7 +24,7 @@ const HomePage = ({ theme, isDarkMode, setCurrentPage, setIsHovering, navItems, 
             background: 'linear-gradient(45deg, #06b6d4, #3b82f6, #8b5cf6)',
             boxShadow: '0 0 60px rgba(59, 130, 246, 0.3)'
           }}
-          whileHover={{ scale: 1.1, rotate: 360 }}
+          whileHover={{ scale: 1.1 }} // Removed rotation
           transition={{ duration: 0.8 }}
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
@@ -85,7 +85,7 @@ const HomePage = ({ theme, isDarkMode, setCurrentPage, setIsHovering, navItems, 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 1.2 }}
-        className="flex flex-col sm:flex-row gap-6 justify-center"
+        className="flex flex-col sm:flex-row gap-6 justify-center mb-20" // Added margin bottom to separate from arrow
       >
         <motion.button
           whileHover={{ 
@@ -112,19 +112,22 @@ const HomePage = ({ theme, isDarkMode, setCurrentPage, setIsHovering, navItems, 
         </motion.button>
       </motion.div>
 
+      {/* Centered scroll down arrow with proper spacing */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 1.4 }}
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+        className="flex justify-center mt-16" // Changed positioning approach
       >
         <motion.div
           animate={{ y: [0, 15, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className={`${theme.accent} cursor-pointer`}
+          className={`${theme.accent} cursor-pointer p-4 rounded-full ${theme.card} ${theme.glow} shadow-lg`}
           onClick={() => setCurrentPage('about')}
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
+          whileHover={{ scale: 1.1, y: -5 }}
+          whileTap={{ scale: 0.9 }}
         >
           <ChevronDown className="w-8 h-8" />
         </motion.div>

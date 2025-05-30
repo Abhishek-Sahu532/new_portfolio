@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Critical CSS for LCP optimization */
+.critical-content {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.hero-text {
+  font-display: swap;
+}
+
 /* Custom theme configuration for Tailwind CSS v4 */
 @theme {
   /* Custom animations */
@@ -45,26 +55,134 @@
   --shadow-glow-blue: 0 0 30px rgba(59, 130, 246, 0.3);
 }
 
-/* Fix for background gaps - ensure full coverage */
+/* Critical performance optimizations */
+html {
+  scroll-behavior: auto; /* Disable smooth scroll for faster navigation */
+  scroll-padding-top: 80px; /* Account for fixed header */
+}
+
 body {
   overflow-x: hidden;
   position: relative;
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+  will-change: scroll-position;
 }
 
-/* Prevent background attachment issues on mobile */
-@media (max-width: 768px) {
-  .fixed-background {
-    background-attachment: scroll !important;
+/* Fixed scroll behavior for experience page */
+.experience-container {
+  min-height: 100vh;
+  padding-bottom: 200px; /* Ensure last item is fully scrollable */
+  scroll-snap-type: y proximity; /* Better scroll snapping */
+}
+
+.experience-item {
+  scroll-snap-align: start;
+  scroll-margin-top: 100px; /* Account for fixed header */
+}
+
+/* Ensure proper viewport coverage */
+section {
+  min-height: 100vh;
+  position: relative;
+  scroll-snap-align: start;
+}
+
+/* Optimize scrollbar for better performance */
+::-webkit-scrollbar {
+  width: 6px; /* Thinner scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+  border-radius: 3px;
+  transition: background 0.2s ease; /* Faster transition */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #0891b2, #7c3aed);
+}
+
+/* Performance optimizations */
+* {
+  /* Enable hardware acceleration for smoother animations */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Reduce paint events */
+.background-fixed {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* Fix for Lenis scroll issues */
+html.lenis {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+/* Better mobile scroll handling */
+@media (max-device-width: 768px) {
+  html {
+    scroll-behavior: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  
+  /* Ensure full viewport usage on mobile */
+  .mobile-viewport {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height */
   }
 }
 
-/* Ensure no gaps at viewport edges */
-.background-cover {
-  min-height: 100vh;
-  min-width: 100vw;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+/* Critical content prioritization */
+.above-fold {
+  content-visibility: visible;
+  contain-intrinsic-size: 100vh;
+}
+
+.below-fold {
+  content-visibility: auto;
+  contain-intrinsic-size: 100vh;
+}
+
+/* Fix viewport issues on mobile */
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Enhanced glass morphism */
+.glass {
+  backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(255, 255, 255, 0.125);
+}
+
+.glass-dark {
+  backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Custom utility classes */
@@ -101,67 +219,40 @@ body {
   100% { background-position: 0% 50%; }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+/* Performance: Reduce layout shifts */
+img {
+  content-visibility: auto;
+  contain-intrinsic-size: 800px 600px;
 }
 
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
+/* Critical CSS for immediate rendering */
+.hero-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #06b6d4, #8b5cf6);
-  border-radius: 4px;
+/* Optimized transitions */
+.page-transition {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #0891b2, #7c3aed);
+/* Ensure scroll container works properly */
+.scroll-container {
+  height: 100vh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
+.scroll-section {
+  min-height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 
-/* Fix viewport issues on mobile */
-html, body {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-/* Prevent horizontal scroll */
-body {
-  overflow-x: hidden;
-}
-
-/* Glass morphism utility */
-.glass {
-  backdrop-filter: blur(16px) saturate(180%);
-  background-color: rgba(255, 255, 255, 0.075);
-  border: 1px solid rgba(255, 255, 255, 0.125);
-}
-
-.glass-dark {
-  backdrop-filter: blur(16px) saturate(180%);
-  background-color: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Enhanced background attachment for better mobile support */
-.enhanced-bg {
-  background-attachment: fixed;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-/* Mobile-specific background fix */
-@media (max-device-width: 768px) {
-  .enhanced-bg {
-    background-attachment: scroll;
-    transform: translate3d(0, 0, 0); /* Force hardware acceleration */
-  }
+/* Fix for experience page scroll issues */
+.experience-page {
+  padding-bottom: 20vh; /* Extra space at bottom */
+  min-height: calc(100vh + 20vh); /* Ensure full scrollable height */
 }
