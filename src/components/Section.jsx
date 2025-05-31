@@ -13,7 +13,7 @@ const Section = memo(({
   const isInView = useInView(ref, { 
     once: false, 
     amount: 0.1,
-    margin: "-10% 0px -10% 0px"
+    margin: "-20% 0px -20% 0px"
   });
 
   useEffect(() => {
@@ -29,14 +29,21 @@ const Section = memo(({
     <section
       ref={ref}
       id={id}
-      className={`min-h-screen flex items-center justify-center relative ${className}`}
+      className={`relative ${className}`}
       style={{ 
         minHeight: '100vh',
-        width: '100%'
+        width: '100%',
+        paddingTop: '80px', // Account for fixed header
+        paddingBottom: '40px'
       }}
     >
-      <div className="relative z-20 w-full">
-        {children}
+      <div 
+        className="flex items-start justify-center w-full h-full"
+        style={{ minHeight: 'calc(100vh - 120px)' }}
+      >
+        <div className="relative z-20 w-full">
+          {children}
+        </div>
       </div>
     </section>
   );

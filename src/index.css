@@ -1,96 +1,80 @@
 @import "tailwindcss";
 
-/* Critical CSS for LCP optimization */
-.critical-content {
-  visibility: visible !important;
-  opacity: 1 !important;
+/* Critical performance optimizations for LCP */
+* {
+  /* Optimize rendering performance */
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.hero-text {
-  font-display: swap;
-}
-
-/* Custom theme configuration for Tailwind CSS v4 */
-@theme {
-  /* Custom animations */
-  --animate-fade-in: fade-in 0.5s ease-in-out;
-  --animate-slide-up: slide-up 0.5s ease-out;  
-  --animate-float: float 3s ease-in-out infinite;
-  
-  /* Custom keyframes */
-  --keyframes-fade-in: {
-    from: { opacity: 0; }
-    to: { opacity: 1; }
-  };
-  
-  --keyframes-slide-up: {
-    from: { 
-      transform: translateY(100px); 
-      opacity: 0; 
-    }
-    to: { 
-      transform: translateY(0); 
-      opacity: 1; 
-    }
-  };
-  
-  --keyframes-float: {
-    0%, 100%: { transform: translateY(0px); }
-    50%: { transform: translateY(-20px); }
-  };
-  
-  /* Custom backdrop blur */
-  --backdrop-blur-xs: blur(2px);
-  
-  /* Custom perspective */
-  --perspective-1000: 1000px;
-  
-  /* Custom gradients for portfolio */
-  --gradient-cyber: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
-  --gradient-aurora: linear-gradient(45deg, #06b6d4, #3b82f6, #8b5cf6, #ec4899);
-  
-  /* Custom shadows for glows */
-  --shadow-glow-cyan: 0 0 30px rgba(6, 182, 212, 0.3);
-  --shadow-glow-purple: 0 0 30px rgba(139, 92, 246, 0.3);
-  --shadow-glow-blue: 0 0 30px rgba(59, 130, 246, 0.3);
-}
-
-/* Critical performance optimizations */
-html {
-  scroll-behavior: auto; /* Disable smooth scroll for faster navigation */
-  scroll-padding-top: 80px; /* Account for fixed header */
-}
-
-body {
+/* Prevent layout shifts (CLS optimization) */
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   overflow-x: hidden;
-  position: relative;
+  /* Improve scroll performance */
+  scroll-behavior: auto; /* Disable smooth scroll for better performance */
+}
+
+/* Critical content prioritization */
+.critical-content {
+  contain: layout style paint;
+  content-visibility: visible;
+}
+
+/* Prevent background image layout shifts */
+.background-container {
+  position: fixed;
+  inset: 0;
+  min-height: 100vh;
+  min-width: 100vw;
+  contain: strict;
+}
+
+/* Optimize image loading */
+img {
+  /* Prevent layout shift during image load */
+  height: auto;
+  max-width: 100%;
   /* Enable hardware acceleration */
   transform: translateZ(0);
-  will-change: scroll-position;
+  /* Optimize loading */
+  loading: lazy;
+  decoding: async;
 }
 
-/* Fixed scroll behavior for experience page */
-.experience-container {
+/* Critical images should load eagerly */
+.hero-image,
+.critical-image {
+  loading: eager !important;
+  fetchpriority: high;
+}
+
+/* Optimize animations for performance */
+.animate-optimized {
+  /* Use GPU acceleration */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  /* Optimize rendering */
+  contain: layout style paint;
+}
+
+/* Prevent layout shifts in loading states */
+.loader-container {
+  position: fixed;
+  inset: 0;
   min-height: 100vh;
-  padding-bottom: 200px; /* Ensure last item is fully scrollable */
-  scroll-snap-type: y proximity; /* Better scroll snapping */
+  min-width: 100vw;
+  contain: strict;
 }
 
-.experience-item {
-  scroll-snap-align: start;
-  scroll-margin-top: 100px; /* Account for fixed header */
-}
-
-/* Ensure proper viewport coverage */
-section {
-  min-height: 100vh;
-  position: relative;
-  scroll-snap-align: start;
-}
-
-/* Optimize scrollbar for better performance */
+/* Optimize scrollbar for performance */
 ::-webkit-scrollbar {
-  width: 6px; /* Thinner scrollbar */
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -100,129 +84,21 @@ section {
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #06b6d4, #8b5cf6);
   border-radius: 3px;
-  transition: background 0.2s ease; /* Faster transition */
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #0891b2, #7c3aed);
-}
-
-/* Performance optimizations */
-* {
-  /* Enable hardware acceleration for smoother animations */
+/* Performance: Enable hardware acceleration for key elements */
+.nav-container,
+.page-container,
+.background-layer {
   transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
+  will-change: auto; /* Only enable when needed */
 }
 
-/* Reduce paint events */
-.background-fixed {
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-}
-
-/* Fix for Lenis scroll issues */
-html.lenis {
-  height: auto;
-}
-
-.lenis.lenis-smooth {
-  scroll-behavior: auto;
-}
-
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
-}
-
-/* Better mobile scroll handling */
-@media (max-device-width: 768px) {
-  html {
-    scroll-behavior: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  body {
-    overflow-x: hidden;
-    overflow-y: auto;
-  }
-  
-  /* Ensure full viewport usage on mobile */
-  .mobile-viewport {
-    min-height: 100vh;
-    min-height: 100dvh; /* Dynamic viewport height */
-  }
-}
-
-/* Critical content prioritization */
-.above-fold {
-  content-visibility: visible;
-  contain-intrinsic-size: 100vh;
-}
-
-.below-fold {
-  content-visibility: auto;
-  contain-intrinsic-size: 100vh;
-}
-
-/* Fix viewport issues on mobile */
-html, body {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-/* Enhanced glass morphism */
-.glass {
-  backdrop-filter: blur(16px) saturate(180%);
-  background-color: rgba(255, 255, 255, 0.075);
-  border: 1px solid rgba(255, 255, 255, 0.125);
-}
-
-.glass-dark {
-  backdrop-filter: blur(16px) saturate(180%);
-  background-color: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Custom utility classes */
-.perspective-1000 {
-  perspective: var(--perspective-1000);
-}
-
-.gradient-cyber {
-  background: var(--gradient-cyber);
-}
-
-.gradient-aurora {
-  background: var(--gradient-aurora);
-  background-size: 400% 400%;
-  animation: gradient-shift 4s ease infinite;
-}
-
-.text-shadow-glow-cyan {
-  text-shadow: var(--shadow-glow-cyan);
-}
-
-.text-shadow-glow-purple {
-  text-shadow: var(--shadow-glow-purple);
-}
-
-.text-shadow-glow-blue {
-  text-shadow: var(--shadow-glow-blue);
-}
-
-/* Gradient animation */
-@keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* Performance: Reduce layout shifts */
-img {
-  content-visibility: auto;
-  contain-intrinsic-size: 800px 600px;
+/* Optimize font loading */
+@font-face {
+  font-family: 'Inter';
+  font-display: swap; /* Improve LCP */
+  src: local('Inter');
 }
 
 /* Critical CSS for immediate rendering */
@@ -231,28 +107,257 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
+  contain: layout style;
 }
 
-/* Optimized transitions */
+/* Reduce layout shifts in navigation */
+.nav-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px; /* Fixed height */
+  contain: layout style;
+}
+
+/* Optimize mouse trail performance */
+.mouse-trail {
+  position: fixed;
+  pointer-events: none;
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+
+/* Optimize particle animations */
+.particles-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  contain: layout style paint;
+  /* Lower priority for non-critical animations */
+  z-index: 1;
+}
+
+/* Prevent reflow during page transitions */
 .page-transition {
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-}
-
-/* Ensure scroll container works properly */
-.scroll-container {
-  height: 100vh;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-}
-
-.scroll-section {
+  contain: layout style paint;
   min-height: 100vh;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
-/* Fix for experience page scroll issues */
-.experience-page {
-  padding-bottom: 20vh; /* Extra space at bottom */
-  min-height: calc(100vh + 20vh); /* Ensure full scrollable height */
+/* Optimize background gradients */
+.gradient-optimized {
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* Prevent layout shift */
+  min-height: 100vh;
+  min-width: 100vw;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  /* Disable background attachment on mobile for better performance */
+  .gradient-optimized {
+    background-attachment: scroll;
+  }
+  
+  /* Reduce animations on mobile */
+  .mobile-reduce-motion {
+    animation-duration: 0.1s !important;
+    transition-duration: 0.1s !important;
+  }
+  
+  /* Optimize viewport handling */
+  .mobile-viewport {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height */
+  }
+}
+
+/* Optimize for reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Performance: Optimize rendering layers */
+.render-layer {
+  isolation: isolate;
+  contain: layout style paint;
+}
+
+/* Critical path optimization */
+.above-fold {
+  contain: layout style;
+  content-visibility: visible;
+}
+
+.below-fold {
+  contain: layout style paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 100vh;
+}
+
+/* Optimize text rendering */
+.text-optimized {
+  text-rendering: optimizeSpeed;
+  font-synthesis: none;
+}
+
+/* Prevent layout shifts in cards */
+.card-container {
+  contain: layout style;
+  min-height: 200px; /* Prevent height changes */
+}
+
+/* Optimize backdrop blur */
+.backdrop-optimized {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  /* Fallback for unsupported browsers */
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Performance monitoring styles */
+.perf-monitor {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px;
+  border-radius: 4px;
+  z-index: 9999;
+  font-family: monospace;
+}
+
+/* Optimize section rendering */
+.section-optimized {
+  min-height: 100vh;
+  contain: layout style;
+  scroll-snap-align: start;
+}
+
+/* Reduce paint operations */
+.no-paint {
+  contain: layout style;
+}
+
+/* Custom utility classes */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+.contain-strict {
+  contain: strict;
+}
+
+.contain-layout {
+  contain: layout;
+}
+
+/* Image optimization classes */
+.img-responsive {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.img-cover {
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Loading state optimizations */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #2a2a2a 25%, #1a1a1a 50%, #2a2a2a 75%);
+  background-size: 200% 100%;
+}
+
+/* Optimize form elements */
+input, textarea, select {
+  contain: layout style;
+}
+
+/* Prevent font loading shifts */
+.font-loading {
+  font-display: swap;
+  visibility: hidden;
+}
+
+.font-loaded {
+  visibility: visible;
+}
+
+/* Critical resource hints */
+.preload-hint {
+  content-visibility: auto;
+  contain-intrinsic-size: 300px 200px;
+}
+
+/* Performance: Optimize z-index layers */
+.z-layer-base { z-index: 0; }
+.z-layer-content { z-index: 10; }
+.z-layer-nav { z-index: 40; }
+.z-layer-modal { z-index: 50; }
+
+/* Intersection observer optimization */
+.observe-target {
+  contain: layout style paint;
+}
+
+/* Optimize theme transitions */
+.theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease;
+  will-change: background-color, color;
+}
+
+.theme-transition * {
+  transition: inherit;
+}
+
+/* Performance: Optimize mouse interactions */
+.hover-optimized {
+  transition: transform 0.2s ease;
+  will-change: transform;
+}
+
+.hover-optimized:hover {
+  transform: translateY(-2px);
+}
+
+/* Optimize loading animations */
+.spin-optimized {
+  animation: spin 1s linear infinite;
+  contain: layout style paint;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Critical rendering optimizations */
+.critical-render {
+  contain: layout style;
+  content-visibility: visible;
+  /* Prioritize rendering */
+  isolation: isolate;
 }

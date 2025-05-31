@@ -1,24 +1,55 @@
 import React, { memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Sun, Moon, X, Menu } from 'lucide-react';
+
+// Route mapping for navigation
+const pageRoutes = {
+  'home': '/',
+  'about': '/about',
+  'experience': '/experience',
+  'projects': '/projects',
+  'skills': '/skills',
+  'certifications': '/certifications',
+  'contact': '/contact'
+};
+
+const routePages = {
+  '/': 'home',
+  '/about': 'about',
+  '/experience': 'experience',
+  '/projects': 'projects',
+  '/skills': 'skills',
+  '/certifications': 'certifications',
+  '/contact': 'contact'
+};
 
 const Navigation = memo(({ 
   theme, 
   isDarkMode, 
   setIsDarkMode, 
-  currentPage, 
-  setCurrentPage, 
   isMenuOpen, 
   setIsMenuOpen, 
   setIsHovering, 
   navItems 
 }) => {
-  // Instant navigation with no loading states
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get current page from URL
+  const currentPage = routePages[location.pathname] || 'home';
+
+  // Enhanced navigation with URL updates
   const handleNavClick = useCallback((itemId) => {
-    // Instant page change
-    setCurrentPage(itemId);
+    const route = pageRoutes[itemId] || '/';
+    navigate(route);
     setIsMenuOpen(false);
-  }, [setCurrentPage, setIsMenuOpen]);
+    
+    // Smooth scroll to top after navigation
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  }, [navigate, setIsMenuOpen]);
 
   const handleThemeToggle = useCallback(() => {
     setIsDarkMode(!isDarkMode);
@@ -49,7 +80,7 @@ const Navigation = memo(({
     >
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo */}
+          {/* Logo with home navigation */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -78,7 +109,7 @@ const Navigation = memo(({
             </motion.span>
           </motion.div>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation with URL awareness */}
           <div className="hidden lg:flex items-center space-x-6">
             {navItems.map((item) => (
               <motion.button
@@ -100,7 +131,7 @@ const Navigation = memo(({
                 </motion.div>
                 <span className="font-medium">{item.label}</span>
                 
-                {/* Active indicator with instant switching */}
+                {/* Active indicator with URL-based detection */}
                 {currentPage === item.id && (
                   <motion.div
                     layoutId="activeTab"
@@ -109,7 +140,7 @@ const Navigation = memo(({
                       type: "spring", 
                       stiffness: 500, 
                       damping: 30,
-                      duration: 0.3 // Fast active state switching
+                      duration: 0.3
                     }}
                   />
                 )}
@@ -193,7 +224,7 @@ const Navigation = memo(({
           </div>
         </div>
 
-        {/* Mobile menu with instant navigation */}
+        {/* Mobile menu with URL-aware navigation */}
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div

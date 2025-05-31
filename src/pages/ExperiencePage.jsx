@@ -10,14 +10,14 @@ const ExperiencePage = ({ theme, isDarkMode, setIsHovering, navItems, setCurrent
     isDarkMode={isDarkMode}
     navItems={navItems}
     setCurrentSection={setCurrentSection}
-    className="py-20" // Added padding for better scroll behavior
+    className="py-20 min-h-screen"
   >
     <div className="max-w-6xl mx-auto px-6 relative z-20">
+      {/* Header Section */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        viewport={{ once: true, amount: 0.2 }}
         className="text-center mb-16"
       >
         <motion.h2
@@ -33,22 +33,17 @@ const ExperiencePage = ({ theme, isDarkMode, setIsHovering, navItems, setCurrent
         </motion.p>
       </motion.div>
 
-      {/* Fixed spacing and scroll behavior */}
-      <div className="space-y-12 pb-20"> {/* Added bottom padding and increased spacing */}
+      {/* Experience Items Container */}
+      <div className="space-y-8 pb-32">
         {experiences.map((exp, index) => (
           <motion.div
-            key={`${exp.company}-${exp.duration}`} // Better key for uniqueness
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            key={`experience-${index}-${exp.company}`}
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ 
               duration: 0.6, 
-              delay: index * 0.1,
+              delay: index * 0.15,
               ease: [0.22, 1, 0.36, 1]
-            }}
-            viewport={{ 
-              once: true, 
-              amount: 0.1, // Reduced threshold for better triggering
-              margin: "-50px 0px -50px 0px" // Better scroll detection
             }}
             whileHover={{ 
               scale: 1.01, 
@@ -57,64 +52,114 @@ const ExperiencePage = ({ theme, isDarkMode, setIsHovering, navItems, setCurrent
             }}
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
-            className={`${theme.card} p-8 rounded-2xl ${theme.glow} shadow-xl cursor-pointer group`}
+            className={`${theme.card} p-6 md:p-8 rounded-2xl ${theme.glow} shadow-xl cursor-pointer group relative overflow-hidden border ${isDarkMode ? 'border-gray-700/50' : 'border-gray-200/50'}`}
             style={{
-              minHeight: 'auto', // Ensure proper height
-              marginBottom: index === experiences.length - 1 ? '100px' : '0' // Extra space for last item
+              // Ensure each card has proper spacing and visibility
+              marginBottom: index === experiences.length - 1 ? '120px' : '32px',
+              minHeight: 'auto'
             }}
           >
-            <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-              <div className="lg:w-1/3 lg:min-w-0"> {/* Fixed flex shrinking */}
-                <motion.div
-                  className={`inline-flex px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${exp.gradient} text-white mb-4`}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {exp.type}
-                </motion.div>
-                <h3 className={`text-2xl font-bold ${theme.text} mb-2 group-hover:${theme.accent} transition-colors duration-300`}>
-                  {exp.title}
-                </h3>
-                <div className={`${theme.accent} font-semibold text-lg mb-2`}>{exp.company}</div>
-                <div className={`${theme.muted} text-sm flex items-center gap-2 mb-2`}>
-                  <Calendar className="w-4 h-4 flex-shrink-0" />
-                  <span>{exp.duration}</span>
+            {/* Background gradient on hover */}
+            <motion.div
+              className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500"
+              style={{
+                background: `linear-gradient(135deg, ${exp.gradient.split(' ')[1]}, ${exp.gradient.split(' ')[3]})`
+              }}
+            />
+
+            <div className="relative z-10">
+              <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+                {/* Left Column - Job Details */}
+                <div className="lg:w-1/3 space-y-4">
+                  {/* Job Type Badge */}
+                  <motion.div
+                    className={`inline-flex px-4 py-2 rounded-full text-xs font-semibold bg-gradient-to-r ${exp.gradient} text-white shadow-lg`}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {exp.type}
+                  </motion.div>
+
+                  {/* Job Title */}
+                  <div>
+                    <h3 className={`text-2xl md:text-3xl font-bold ${theme.text} mb-2 group-hover:${theme.accent} transition-colors duration-300 leading-tight`}>
+                      {exp.title}
+                    </h3>
+                    <div className={`${theme.accent} font-bold text-lg md:text-xl mb-3`}>
+                      {exp.company}
+                    </div>
+                  </div>
+
+                  {/* Date and Location */}
+                  <div className="space-y-2">
+                    <div className={`${theme.muted} text-sm flex items-center gap-2`}>
+                      <Calendar className="w-4 h-4 flex-shrink-0" />
+                      <span className="font-medium">{exp.duration}</span>
+                    </div>
+                    <div className={`${theme.muted} text-sm flex items-center gap-2`}>
+                      <LocationIcon className="w-4 h-4 flex-shrink-0" />
+                      <span className="font-medium">{exp.location}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className={`${theme.muted} text-sm flex items-center gap-2`}>
-                  <LocationIcon className="w-4 h-4 flex-shrink-0" />
-                  <span>{exp.location}</span>
+                
+                {/* Right Column - Responsibilities */}
+                <div className="lg:w-2/3">
+                  <h4 className={`${theme.text} font-semibold text-lg mb-4`}>
+                    Key Responsibilities:
+                  </h4>
+                  <ul className="space-y-4">
+                    {exp.description.map((desc, descIndex) => (
+                      <motion.li
+                        key={`desc-${index}-${descIndex}`}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ 
+                          duration: 0.4, 
+                          delay: (index * 0.15) + (descIndex * 0.1),
+                          ease: "easeOut"
+                        }}
+                        className={`${theme.muted} flex items-start gap-4 leading-relaxed group-hover:${theme.text} transition-colors duration-300`}
+                      >
+                        <motion.div 
+                          className={`w-2 h-2 bg-gradient-to-r ${exp.gradient} rounded-full mt-2 flex-shrink-0`}
+                          whileHover={{ scale: 1.5 }}
+                          transition={{ duration: 0.2 }}
+                        />
+                        <span className="text-base">{desc}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-              
-              <div className="lg:w-2/3">
-                <ul className="space-y-4"> {/* Increased spacing */}
-                  {exp.description.map((desc, descIndex) => (
-                    <motion.li
-                      key={`${index}-${descIndex}`}
-                      initial={{ opacity: 0, x: 20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      transition={{ 
-                        duration: 0.4, 
-                        delay: descIndex * 0.05,
-                        ease: "easeOut"
-                      }}
-                      viewport={{ once: true, amount: 0.1 }}
-                      className={`${theme.muted} flex items-start gap-3 leading-relaxed`}
-                    >
-                      <motion.div 
-                        className={`w-2 h-2 bg-gradient-to-r ${exp.gradient} rounded-full mt-2 flex-shrink-0`}
-                        whileHover={{ scale: 1.5 }}
-                        transition={{ duration: 0.2 }}
-                      />
-                      <span className="text-base">{desc}</span>
-                    </motion.li>
-                  ))}
-                </ul>
               </div>
             </div>
+
+            {/* Hover indicator */}
+            <motion.div
+              className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-cyan-400 to-purple-500 w-0 group-hover:w-full transition-all duration-500"
+            />
           </motion.div>
         ))}
       </div>
+
+      {/* Career Progression Indicator */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.8 }}
+        className="text-center mt-16"
+      >
+        <div className={`inline-flex items-center gap-2 px-6 py-3 ${theme.card} rounded-full ${theme.glow} shadow-lg border ${isDarkMode ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className={`w-2 h-2 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full`}
+          />
+          <span className={`${theme.muted} text-sm font-medium`}>
+            Continuously evolving and growing
+          </span>
+        </div>
+      </motion.div>
     </div>
   </Section>
 );

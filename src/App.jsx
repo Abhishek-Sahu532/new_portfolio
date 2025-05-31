@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, LayoutGroup } from 'framer-motion';
 import { ChevronDown, Menu, X, Mail, Phone, MapPin, Github, Linkedin, ExternalLink, Moon, Sun, Code2, Database, Globe, Cpu, Award, Briefcase, GraduationCap, User, FolderOpen, Calendar, MapPin as LocationIcon } from 'lucide-react';
 
-// Import components directly (no lazy loading to avoid loading states)
-import LoadingScreen from './components/LoadingScreen';
+// Import components
+import SmartLoader from './components/SmartLoader';
 import MouseTrail from './components/MouseTrail';
 import Navigation from './components/Navigation';
 import Section from './components/Section';
+import PerformanceMonitor from './components/PerformanceMonitor';
 
-// Import pages directly
+// Import pages
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import ExperiencePage from './pages/ExperiencePage';
@@ -20,134 +22,141 @@ import ContactPage from './pages/ContactPage';
 // Import data
 import { themes, sectionBackgrounds, navItems, experiences, certifications, projects, skills } from './data/portfolioData';
 
-const App = () => {
-  const [currentPage, setCurrentPage] = useState('home');
+// Route mapping
+const routeMap = {
+  '/': 'home',
+  '/about': 'about',
+  '/experience': 'experience',
+  '/projects': 'projects',
+  '/skills': 'skills',
+  '/certifications': 'certifications',
+  '/contact': 'contact'
+};
+
+const pageMap = {
+  'home': '/',
+  'about': '/about',
+  'experience': '/experience',
+  'projects': '/projects',
+  'skills': '/skills',
+  'certifications': '/certifications',
+  'contact': '/contact'
+};
+
+// Main App Content Component
+const AppContent = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [currentSection, setCurrentSection] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const [trail, setTrail] = useState([]);
-  const [scrollY, setScrollY] = useState(0);
+  const [imagesPreloaded, setImagesPreloaded] = useState(false);
+  const [showPerfMonitor, setShowPerfMonitor] = useState(false);
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll();
 
-  // Mouse tracking with scroll compensation
+  // Get current page from URL
+  const currentPage = routeMap[location.pathname] || 'home';
+
+  // Mouse tracking
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  const springConfig = { damping: 30, stiffness: 800 };
+  const springConfig = { damping: 30, stiffness: 800, restDelta: 0.001 };
   const mouseXSpring = useSpring(mouseX, springConfig);
   const mouseYSpring = useSpring(mouseY, springConfig);
 
-  // Track scroll position for mouse trail correction
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Memoized theme to prevent unnecessary re-renders
+  // Memoized theme
   const theme = useMemo(() => isDarkMode ? themes.dark : themes.light, [isDarkMode]);
 
-  // Optimized background data
-  const currentBgData = useMemo(() => {
-    const bgData = sectionBackgrounds[currentPage];
-    if (!bgData) return null;
-    
-    return {
-      image: isDarkMode ? bgData.dark : bgData.light,
-      overlay: isDarkMode ? bgData.overlay.dark : bgData.overlay.light,
-      gradient: bgData.gradient
-    };
-  }, [currentPage, isDarkMode]);
-
-  // Silent background image preloading
+  // Load theme from localStorage
   useEffect(() => {
-    const preloadImages = () => {
-      // Preload all images silently in background
-      Object.entries(sectionBackgrounds).forEach(([pageId, bgData]) => {
-        const darkImg = new Image();
-        const lightImg = new Image();
-        darkImg.src = bgData.dark;
-        lightImg.src = bgData.light;
-        // Set loading priority for current and next likely pages
-        if (pageId === currentPage || pageId === 'home' || pageId === 'about') {
-          darkImg.loading = 'eager';
-          lightImg.loading = 'eager';
-        } else {
-          darkImg.loading = 'lazy';
-          lightImg.loading = 'lazy';
-        }
-      });
-    };
-    
-    preloadImages();
-  }, [currentPage]);
+    const savedTheme = localStorage.getItem('portfolio-theme');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+    }
+  }, []);
 
-  // Initialize Lenis
+  // Save theme to localStorage
   useEffect(() => {
-    let lenis;
-    
-    const initLenis = async () => {
-      try {
-        const Lenis = (await import('@studio-freight/lenis')).default;
-        
-        lenis = new Lenis({
-          duration: 0.8,
-          easing: (t) => 1 - Math.pow(1 - t, 3),
-          direction: 'vertical',
-          gestureDirection: 'vertical',
-          smooth: true,
-          mouseMultiplier: 0.8,
-          smoothTouch: false,
-          touchMultiplier: 1.5,
-          infinite: false,
+    localStorage.setItem('portfolio-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  // Critical resource preloading based on current route
+  useEffect(() => {
+    const preloadForRoute = async () => {
+      const bgData = sectionBackgrounds[currentPage];
+      if (!bgData) {
+        setImagesPreloaded(true);
+        return;
+      }
+
+      const imagesToPreload = [bgData.dark, bgData.light].filter(Boolean);
+      
+      const imagePromises = imagesToPreload.map(src => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = resolve;
+          img.onerror = resolve; // Continue even if image fails
+          img.src = src;
+          img.loading = 'eager';
+          img.fetchPriority = 'high';
         });
+      });
 
-        const raf = (time) => {
-          lenis.raf(time);
-          requestAnimationFrame(raf);
-        };
-        requestAnimationFrame(raf);
-        
+      try {
+        await Promise.all(imagePromises);
       } catch (error) {
-        console.log('Lenis not available, using native scroll');
+        console.warn('Image preloading failed:', error);
+      } finally {
+        setImagesPreloaded(true);
       }
     };
 
-    initLenis();
-    return () => lenis?.destroy();
+    preloadForRoute();
+  }, [currentPage]);
+
+  // Performance monitor toggle
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.ctrlKey && e.key === 'p') {
+        e.preventDefault();
+        setShowPerfMonitor(prev => !prev);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
 
-  // Only show loading screen on initial app load
+  // Loading screen
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 2000);
+    const timer = setTimeout(() => setIsLoading(false), 1000); // Even faster with routing
     return () => clearTimeout(timer);
   }, []);
 
-  // Fixed mouse tracking with scroll compensation
+  // Mouse tracking
   useEffect(() => {
     let frameId;
+    let lastUpdate = 0;
     
     const handleMouseMove = (e) => {
+      const now = performance.now();
+      if (now - lastUpdate < 16) return;
+      
       cancelAnimationFrame(frameId);
       frameId = requestAnimationFrame(() => {
-        // Set mouse position relative to viewport (fixed positioning)
         mouseX.set(e.clientX);
         mouseY.set(e.clientY);
         
-        // Update trail with current scroll position compensation
         setTrail(prevTrail => {
-          const newTrail = [...prevTrail, { 
-            x: e.clientX, 
-            y: e.clientY, // Use clientY (viewport relative) not pageY
-            id: Date.now() 
-          }];
-          return newTrail.slice(-6);
+          const newTrail = [...prevTrail, { x: e.clientX, y: e.clientY, id: now }];
+          return newTrail.slice(-4);
         });
+        
+        lastUpdate = now;
       });
     };
     
@@ -158,67 +167,27 @@ const App = () => {
     };
   }, [mouseX, mouseY]);
 
-  // Instant page transitions - no loading states
+  // Navigation handler using React Router
   const handlePageChange = (newPage) => {
     if (newPage === currentPage) return;
     
     setIsMenuOpen(false);
-    
-    // Instant page change - no delays or loading
-    setCurrentPage(newPage);
-    
-    // Smooth scroll to top
+    const route = pageMap[newPage] || '/';
+    navigate(route);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Page components mapping
-  const pageComponents = useMemo(() => ({
-    home: HomePage,
-    about: AboutPage,
-    experience: ExperiencePage,
-    projects: ProjectsPage,
-    skills: SkillsPage,
-    certifications: CertificationsPage,
-    contact: ContactPage
-  }), []);
-
-  // Instant page renderer - no loading fallbacks
-  const renderPage = (pageKey) => {
-    const PageComponent = pageComponents[pageKey] || HomePage;
+  // Get current background data
+  const currentBgData = useMemo(() => {
+    const bgData = sectionBackgrounds[currentPage];
+    if (!bgData) return null;
     
-    return (
-      <PageComponent 
-        theme={theme} 
-        isDarkMode={isDarkMode} 
-        setCurrentPage={handlePageChange}
-        setIsHovering={setIsHovering}
-        navItems={navItems}
-        setCurrentSection={setCurrentSection}
-      />
-    );
-  };
-
-  // Ultra-fast transition variants
-  const pageVariants = {
-    initial: { 
-      opacity: 0,
-      y: 20
-    },
-    animate: { 
-      opacity: 1,
-      y: 0
-    },
-    exit: { 
-      opacity: 0,
-      y: -20
-    }
-  };
-
-  const pageTransition = {
-    type: "tween",
-    ease: [0.22, 1, 0.36, 1],
-    duration: 0.3
-  };
+    return {
+      image: isDarkMode ? bgData.dark : bgData.light,
+      overlay: isDarkMode ? bgData.overlay.dark : bgData.overlay.light,
+      gradient: bgData.gradient
+    };
+  }, [currentPage, isDarkMode]);
 
   const portfolioProps = {
     theme,
@@ -235,41 +204,74 @@ const App = () => {
     trail,
     navItems,
     scrollYProgress,
-    setCurrentSection,
-    scrollY // Pass scroll position for mouse trail correction
+    setCurrentSection
+  };
+
+  // Page transition variants
+  const pageVariants = {
+    initial: { 
+      opacity: 0,
+      x: 20
+    },
+    animate: { 
+      opacity: 1,
+      x: 0
+    },
+    exit: { 
+      opacity: 0,
+      x: -20
+    }
+  };
+
+  const pageTransition = {
+    type: "tween",
+    ease: [0.22, 1, 0.36, 1],
+    duration: 0.3
   };
 
   return (
     <div className="min-h-screen relative overflow-x-hidden" style={{ cursor: 'none' }}>
-      {/* Only show loading screen on initial app load */}
+      {/* Loading screen only on initial app load */}
       <AnimatePresence>
-        {isLoading && <LoadingScreen key="loading" />}
+        {isLoading && (
+          <SmartLoader 
+            key="loading"
+            onComplete={() => setIsLoading(false)}
+            isDarkMode={isDarkMode}
+          />
+        )}
       </AnimatePresence>
 
       {!isLoading && (
         <LayoutGroup>
+          {/* Performance Monitor */}
+          <PerformanceMonitor 
+            isDarkMode={isDarkMode} 
+            show={showPerfMonitor} 
+          />
+          
           <MouseTrail {...portfolioProps} />
           <Navigation {...portfolioProps} />
 
-          {/* Instant background switching */}
-          <div className="fixed inset-0 z-0">
-            <motion.div 
+          {/* Optimized background with route-based loading */}
+          <div className="fixed inset-0 z-0" style={{ willChange: 'auto' }}>
+            <div 
               className="absolute inset-0"
-              animate={{
+              style={{
                 background: isDarkMode 
                   ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #111827 70%, #000000 100%)'
-                  : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 30%, #e2e8f0 70%, #cbd5e1 100%)'
+                  : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 30%, #e2e8f0 70%, #cbd5e1 100%)',
+                minHeight: '100vh',
+                minWidth: '100vw'
               }}
-              transition={{ duration: 0.3 }}
             />
             
-            {/* Background image with instant switching */}
-            {currentBgData && (
+            {/* Route-specific background image */}
+            {currentBgData && imagesPreloaded && (
               <motion.div
-                key={`bg-${currentPage}`}
+                key={`bg-${location.pathname}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
                 transition={{ duration: 0.4 }}
                 className="absolute inset-0"
                 style={{
@@ -277,27 +279,37 @@ const App = () => {
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat',
-                  backgroundAttachment: 'fixed'
+                  minHeight: '100vh',
+                  minWidth: '100vw'
                 }}
               />
             )}
             
-            {/* Simple overlay */}
+            {/* Overlay */}
             {currentBgData && (
               <div
                 className="absolute inset-0"
                 style={{
                   background: `linear-gradient(${currentBgData.overlay}, ${currentBgData.overlay}), ${currentBgData.gradient}`,
+                  minHeight: '100vh',
+                  minWidth: '100vw'
                 }}
               />
             )}
           </div>
 
-          <main className="pt-20 relative z-10" ref={containerRef}>
-            {/* Instant page transitions - no loading states */}
+          {/* Main content with route-based rendering */}
+          <main 
+            className="pt-20 relative z-10" 
+            ref={containerRef}
+            style={{ 
+              minHeight: '100vh',
+              contain: 'layout style paint'
+            }}
+          >
             <AnimatePresence mode="wait">
               <motion.div
-                key={currentPage}
+                key={location.pathname}
                 variants={pageVariants}
                 initial="initial"
                 animate="animate"
@@ -305,67 +317,119 @@ const App = () => {
                 transition={pageTransition}
                 className="relative z-20"
               >
-                {renderPage(currentPage)}
+                <Routes>
+                  <Route path="/" element={
+                    <HomePage 
+                      theme={theme} 
+                      isDarkMode={isDarkMode} 
+                      setCurrentPage={handlePageChange}
+                      setIsHovering={setIsHovering}
+                      navItems={navItems}
+                      setCurrentSection={setCurrentSection}
+                    />
+                  } />
+                  <Route path="/about" element={
+                    <AboutPage 
+                      theme={theme} 
+                      isDarkMode={isDarkMode} 
+                      setCurrentPage={handlePageChange}
+                      setIsHovering={setIsHovering}
+                      navItems={navItems}
+                      setCurrentSection={setCurrentSection}
+                    />
+                  } />
+                  <Route path="/experience" element={
+                    <ExperiencePage 
+                      theme={theme} 
+                      isDarkMode={isDarkMode} 
+                      setCurrentPage={handlePageChange}
+                      setIsHovering={setIsHovering}
+                      navItems={navItems}
+                      setCurrentSection={setCurrentSection}
+                    />
+                  } />
+                  <Route path="/projects" element={
+                    <ProjectsPage 
+                      theme={theme} 
+                      isDarkMode={isDarkMode} 
+                      setCurrentPage={handlePageChange}
+                      setIsHovering={setIsHovering}
+                      navItems={navItems}
+                      setCurrentSection={setCurrentSection}
+                    />
+                  } />
+                  <Route path="/skills" element={
+                    <SkillsPage 
+                      theme={theme} 
+                      isDarkMode={isDarkMode} 
+                      setCurrentPage={handlePageChange}
+                      setIsHovering={setIsHovering}
+                      navItems={navItems}
+                      setCurrentSection={setCurrentSection}
+                    />
+                  } />
+                  <Route path="/certifications" element={
+                    <CertificationsPage 
+                      theme={theme} 
+                      isDarkMode={isDarkMode} 
+                      setCurrentPage={handlePageChange}
+                      setIsHovering={setIsHovering}
+                      navItems={navItems}
+                      setCurrentSection={setCurrentSection}
+                    />
+                  } />
+                  <Route path="/contact" element={
+                    <ContactPage 
+                      theme={theme} 
+                      isDarkMode={isDarkMode} 
+                      setCurrentPage={handlePageChange}
+                      setIsHovering={setIsHovering}
+                      navItems={navItems}
+                      setCurrentSection={setCurrentSection}
+                    />
+                  } />
+                </Routes>
               </motion.div>
             </AnimatePresence>
           </main>
 
           {/* Minimal ambient effects */}
-          <div className="fixed inset-0 pointer-events-none z-5">
-            {[...Array(6)].map((_, i) => (
-              <motion.div
-                key={`particle-${i}`}
-                className={`absolute w-1 h-1 ${isDarkMode ? 'bg-cyan-400/8' : 'bg-blue-400/8'} rounded-full`}
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                }}
-                animate={{
-                  y: [0, -30, 0],
-                  opacity: [0, 0.5, 0],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  delay: Math.random() * 2,
-                  ease: "easeInOut"
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Simple ambient orbs */}
-          <div className="fixed inset-0 pointer-events-none z-5 overflow-hidden">
-            <motion.div
-              className={`absolute w-96 h-96 rounded-full blur-3xl ${isDarkMode ? 'bg-cyan-400/4' : 'bg-blue-400/4'}`}
-              animate={{
-                x: [0, 100, 0],
-                y: [0, -50, 0],
-              }}
-              transition={{
-                duration: 20,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-              style={{ top: '20%', left: '20%' }}
-            />
-            <motion.div
-              className={`absolute w-96 h-96 rounded-full blur-3xl ${isDarkMode ? 'bg-purple-400/4' : 'bg-purple-400/4'}`}
-              animate={{
-                x: [0, -80, 0],
-                y: [0, 60, 0],
-              }}
-              transition={{
-                duration: 25,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-              style={{ bottom: '20%', right: '20%' }}
-            />
-          </div>
+          {imagesPreloaded && (
+            <div className="fixed inset-0 pointer-events-none z-5">
+              {[...Array(3)].map((_, i) => (
+                <motion.div
+                  key={`particle-${i}`}
+                  className={`absolute w-1 h-1 ${isDarkMode ? 'bg-cyan-400/6' : 'bg-blue-400/6'} rounded-full`}
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                  }}
+                  animate={{
+                    y: [0, -20, 0],
+                    opacity: [0, 0.4, 0],
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    delay: Math.random() * 2,
+                    ease: "easeInOut"
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </LayoutGroup>
       )}
     </div>
+  );
+};
+
+// Main App Component with Router
+const App = () => {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   );
 };
 
